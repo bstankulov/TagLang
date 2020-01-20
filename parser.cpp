@@ -17,14 +17,14 @@
 #define OUTPUT_FILE "output.txt"
 
 void evaluateInputLine(AbstractExpr*& rootNode);
-AbstractExpr* parseCommand(const std::string& command);
+AbstractExpr* buildAbstractSyntaxTree(const std::string& command);
 std::vector<std::string> getCommand();
 void printProgramOutput(const std::vector<int>& lineResult);
 
 int main() {    
     std::vector<std::string> IMLProgram = getCommand();// Getting the IML tag lines
     for (std::string line : IMLProgram) {
-        AbstractExpr* rootNode = parseCommand(line); // Parsing it and creating the Abstract Syntax Tree (AST) 
+        AbstractExpr* rootNode = buildAbstractSyntaxTree(line); // Parsing it and creating the Abstract Syntax Tree (AST) 
         evaluateInputLine(rootNode); // Evaluating the AST
     } 
     std::cout << "Program finished successfully. Closing...\n";
@@ -71,7 +71,7 @@ void evaluateInputLine(AbstractExpr*& rootNode) {
     printProgramOutput(result);
 }
 
-AbstractExpr* parseCommand(const std::string& command) {
+AbstractExpr* buildAbstractSyntaxTree(const std::string& command) {
     std::istringstream parser(command);
     std::string word;
     std::stack <AbstractExpr*> functionalExpressionStack;
