@@ -2,7 +2,6 @@
 #define __MAP_EXPR_H
 
 #include "abstract_expression.h"
-#include <string>
 
 class MapExpr : public AbstractExpr {
     private:

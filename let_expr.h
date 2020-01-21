@@ -17,7 +17,15 @@ class LetExpr : public AbstractExpr {
 
         std::vector<int> calculate();
 
+        void setName();
+
         std::string getTag();
+
+        std::string getName();
+
+        const std::vector<int>& getChildren() const;
+
+        bool hasChildren() const;
 
         ~LetExpr();
 };

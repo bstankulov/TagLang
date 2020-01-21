@@ -3,9 +3,6 @@
 
 #include "abstract_expression.h"
 
-#include <vector>
-#include <string>
-
 class ConstExpr : public AbstractExpr {
     private:
         int value;

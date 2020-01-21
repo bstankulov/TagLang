@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <exception>
+#include "logger.h"
 
 enum string_code {
     SUM,
@@ -120,7 +121,7 @@ class Utils
                     break;
                 }
                 default:
-                    throw new std::invalid_argument("Invalid Aggregation function in hashtag");
+                    Logger::Error("Your AGG function has unknown tag. Supported Aggregate tags are: FST, LST, PRO, SUM, AVG");
             }
             input.erase(input.begin() + 1, input.end());
         }
@@ -129,9 +130,8 @@ class Utils
                          std::string       option, 
                          std::string       params = std::string()) {
             if (option == "REV") {
-                if (params != "") {
-                    throw new std::invalid_argument("There shouldn't be parameter of any type if you want to just reverse the list");
-                }
+                if (params != "")
+                    Logger::Error("There shouldn't be any parameter in tag SRT-REV");
                 std::reverse(input.begin(), input.end());
             } else if (option == "ORD") {
                 if (params == "ASC") {
@@ -139,18 +139,16 @@ class Utils
                 } else if (params == "DSC") {
                     std::sort(input.rbegin(), input.rend());
                 } else {
-                    throw new std::invalid_argument("There shouldn't be parameter of any type if you want to just reverse the list");
+                    Logger::Error("SRT-ORD supports only two parameters: ASC and DSC. Check your input.");
                 }
             } else if (option == "DST") {
-                if (params != "") {
-                    throw new std::invalid_argument("There shouldn't be parameter of any type if you want to just reverse the list");
-                }
+                if (params != "")
+                    Logger::Error("There shouldn't be any parameter in tag SRT-DST");
                 //Removing duplicates:
                 distinct(input);
             } else if (option == "SLC") {
-                if (!Utils::is_number(params)) {
-                    throw new std::invalid_argument("Parameter should be a number");
-                }
+                if (!Utils::is_number(params))
+                    Logger::Error("Parameter of SRT-SLC tag must be a number");
                 int slice = std::stoi(params) % input.size();
                 input.erase(input.begin(), input.begin() + slice);
             } else {

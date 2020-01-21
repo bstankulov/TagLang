@@ -1,6 +1,5 @@
 #include "map_expr.h"
 #include "command_map.cpp"
-#include <string>
 
 MapExpr::MapExpr(const std::string& tag, 
                  const std::string& option, 

@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <sstream>
 #include <stack>
+#include <string>
+#include "logger.h"
 #include "utils.cpp"
 #include "parser_utils.cpp"
 #include "command_map.cpp"
@@ -13,6 +15,7 @@
 #include "aggr_expr.h"
 #include "map_expr.h"
 #include "sort_expr.h"
+#include "let_expr.h"
 #include "const_expr.cpp"
 #define OUTPUT_FILE "output.txt"
 
@@ -27,7 +30,7 @@ int main() {
         AbstractExpr* rootNode = buildAbstractSyntaxTree(line); // Parsing it and creating the Abstract Syntax Tree (AST) 
         evaluateInputLine(rootNode); // Evaluating the AST
     } 
-    std::cout << "Program finished successfully. Closing...\n";
+    Logger::Log(std::cout, "Program finished successfully. Closing...");
 }
 
 std::vector<std::string> getCommand() {
@@ -62,7 +65,7 @@ void printProgramOutput(const std::vector<int>& lineResult) {
     }
     outputFile << '\n';
     outputFile.close();
-    std::cout << "Written successfully in the output file.\n";
+    Logger::Log(std::cout, "Written successfully in the output file.");
 }
 
 void evaluateInputLine(AbstractExpr*& rootNode) {
@@ -76,34 +79,52 @@ AbstractExpr* buildAbstractSyntaxTree(const std::string& command) {
     std::string word;
     std::stack <AbstractExpr*> functionalExpressionStack;
     AbstractExpr* rootNode;
+    std::stack <LetExpr*> latestLetTags;
     while (parser >> word) {
         AbstractExpr* expression = nullptr;
         if (word[0] == '<') {
             //Check if the tag is closing
             if (word[word.size() - 1] == '>' && word[1] == '/') {
                 //Check if the closing tag is the opening one, so parsing can finish
+                if (functionalExpressionStack.top()->getTag() == "LET")
+                    latestLetTags.pop();
                 if (functionalExpressionStack.size() == 1) {
                     rootNode = functionalExpressionStack.top();
                     functionalExpressionStack.pop();
-                    //std::cout << "Removed the opening tag "<< rootNode->getTag() << "\nParsed successfully, calculating..." << std::endl;
+                    Logger::Log(std::cout, "Parsed successfully, calculating...");
                     break;
                 }
-            //std::cout << "Removing from the stack: " << functionalExpressionStack.top()->getTag() << std::endl;
             functionalExpressionStack.pop();
+            } else if (word == "<BODY/>") {
+                LetExpr* let = dynamic_cast<LetExpr*> (functionalExpressionStack.top());
+                if ( !let )
+                    Logger::Error("The body tag should enclose the first part of the LET tag definition");
+
+                if( !(let->hasChildren()) )
+                    Logger::Error("Duplicating BODY tag or empty definition of LET first part. The BODY tag should only be used to close the first part of LET tag.");
+
+                let->setName(); // Should set the commander
             } else {
                 //In this else sits the logic, that handles the opening tag
                 expression = ParseUtils::extractCommand(word);
-                if (functionalExpressionStack.size() > 0) {
+                if (expression->getTag() == "LET")
+                    latestLetTags.push(dynamic_cast<LetExpr*>(expression));
+                if (functionalExpressionStack.size() > 0)
                     functionalExpressionStack.top()->addChild(expression);
-                }
                 //std::cout << "Adding " << expression->getTag() << " to the stack" << std::endl;
                 functionalExpressionStack.push(expression);
             }
         } else if (Utils::is_number(word)){
             expression = new ConstExpr(std::stoi(word));
             functionalExpressionStack.top()->addChild(expression);
+        } else if (latestLetTags.top()->getName() == word) {
+            //Handling the LET Name parsing
+            AbstractExpr* currentTopExpression = functionalExpressionStack.top();
+            for  (int el : latestLetTags.top()->getChildren()) {
+                currentTopExpression->addChild(new ConstExpr(el));
+            }
         } else {
-            throw new std::invalid_argument("Invalid command format");
+            Logger::Error("Invalid command format: Could be only an opening/closing tag; numerical value or let tag name");
         }
     }
     return rootNode;
